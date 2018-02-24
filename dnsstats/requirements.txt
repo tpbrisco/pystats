@@ -1,0 +1,2 @@
+dnspython==1.15.0
+prometheus-client==0.1.1
