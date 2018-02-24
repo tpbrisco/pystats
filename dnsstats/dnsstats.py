@@ -3,6 +3,7 @@ import sys, os
 import dns.resolver, dns.name
 from prometheus_client import start_http_server, Summary
 import random, time
+import configparser
 
 def dns_lookup(resolver_ip, resolver, hostname):
     '''return the time it took to look up a hostname'''
@@ -18,6 +19,12 @@ def dns_lookup(resolver_ip, resolver, hostname):
     end = time.time()
     return end - start
 
+def conf_load():
+    '''load configuration file'''
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    return config['DEFAULT']
+
 # figure out how many dns servers are configured
 resolver = dns.resolver.Resolver()
 resolvers = resolver.nameservers.copy()
@@ -32,21 +39,22 @@ no_resolvers = len(resolver.nameservers)
 #			name: the hostname to look up
 #			summary: the prometheus summary object for it
 stats = []
+conf = conf_load()
 print("{0} resolvers".format(no_resolvers))
 for i in range(0, no_resolvers):
     new_stat = {}
     name = 'ip_%s_dns_' % resolvers[i]
     name = name.replace('.','_') # make acceptable prometheus metric name
-    new_stat['good_fqdn'] = {'name':  'ns1.inmyshorts.org.',
+    new_stat['good_fqdn'] = {'name':  conf['good_fqdn'],
              'summary': Summary(name + 'good_fqdn_time',
                      'Time spent on good FQDN DNSlookup')}
-    new_stat['bad_fqdn'] = {'name': 'notoneofmine.inmyshorts.org',
+    new_stat['bad_fqdn'] = {'name': conf['bad_fqdn'],
              'summary': Summary(name + 'bad_fqdn_time',
                                 'Time spent on bad FQDN DNS lookup')}
-    new_stat['good_rel'] = {'name': 'dracula',
+    new_stat['good_rel'] = {'name': conf['good_rel'],
              'summary': Summary(name + 'good_rel_time',
                                 'Time spent on good relative DNS lookup')}
-    new_stat['bad_rel'] = {'name': 'notdracula',
+    new_stat['bad_rel'] = {'name': conf['bad_rel'],
              'summary': Summary(name + 'bad_rel_time',
                                 'Time spent on bad relative DNS lookup')}
     stats.append(new_stat.copy())
