@@ -2,7 +2,7 @@
 import sys, os
 import dns.resolver, dns.name
 from prometheus_client import start_http_server, Summary
-import random, time
+import time
 import configparser
 
 def dns_lookup(resolver_ip, resolver, hostname):
@@ -23,6 +23,8 @@ def conf_load():
     '''load configuration file'''
     config = configparser.ConfigParser()
     config.read('config.ini')
+    if not 'DEFAULT' in config:
+        raise KeyError("No [DEFAULT] section in configuration")
     return config['DEFAULT']
 
 # figure out how many dns servers are configured
