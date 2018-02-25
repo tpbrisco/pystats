@@ -6,6 +6,9 @@ __pycache__/
 # emacs files
 *~
 
+# vendoring directory
+vendor
+
 # C extensions
 *.so
 
