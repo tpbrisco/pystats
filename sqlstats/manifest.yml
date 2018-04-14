@@ -1,0 +1,7 @@
+applications:
+- name: sqlstats
+  memory: 512M
+  instances: 1
+  buildpack: python_buildpack
+  services:
+    - mysql
