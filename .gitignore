@@ -8,6 +8,7 @@ __pycache__/
 
 # vendoring directory
 vendor
+dev/
 
 # C extensions
 *.so
