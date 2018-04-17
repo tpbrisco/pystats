@@ -1,7 +1,7 @@
 # a very simple query point to check mysql galera status and return json
 import os, sys
 from flask import Flask, render_template, json, request, jsonify, Response
-from flask.ext.mysql import MySQL
+from flaskext.mysql import MySQL
 
 app = Flask(__name__)
 mysql = MySQL()
