@@ -66,17 +66,25 @@ def key_match(d, m):
 def main():
     return "Welcome! Maybe you meant /wsrep_status?"
 
-@app.route("/wsrep_status")
+@app.route("/wsrep_status", methods=['GET', 'POST'])
 def get_mysql_galera():
+    '''query database for galera wsrep_status, default filter=wsrep_cluster_%'''
+    filter = 'wsrep_cluster_%'
+    if request.method == 'POST':
+        if 'filter' in request.form:
+            filter = request.form['filter']
+    elif request.method == 'GET':
+        new_filter = request.args.get('filter')
+        if new_filter != None:
+            filter = new_filter
     conn = mysql.connect()
     cursor = conn.cursor()
-    query = 'show global status like \'wsrep_%\''
+    query = 'show global status like \'%s\'' % (filter)
     cursor.execute(query)
     data = cursor.fetchall()
     conn.close()
     d = cvt_data(data)
-    w = key_match(d, 'wsrep_cluster_')
-    return Response(json.dumps(w, indent=4), mimetype='application/json')
+    return Response(json.dumps(d, indent=4), mimetype='application/json')
     
 
 if __name__ == "__main__":
