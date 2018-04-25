@@ -12,6 +12,10 @@ from flaskext.mysql import MySQL
 # -f config.txt
 # and set variables based on environment variables
 def get_cmd_opts():
+    '''get command options - look in environment or command line for parameters'''
+    # Environment variables (e.g. STAT_DBSVC) are best in cloud foundry environments,
+    # while CLI flags are best in debugging environment (-u,-p,-h)
+    #
     # set variables based on environment variables first
     stat_dbsvc=os.getenv('STAT_DBSVC')
     # next are really only used if no database service is discovered
@@ -20,8 +24,8 @@ def get_cmd_opts():
     stat_dbdb=os.getenv('STAT_DBDB')
     stat_dbhost=os.getenv('STAT_DBHOST')
     # get variables from config file
-    # punt for now
-    # get variables from command line
+    # "pass" for now
+    # get variables from command line, which override environment variables
     try:
         options, remainder = getopt.getopt(sys.argv[1:], 's:u:p:d:h:', ['service=',
                                                                    'username=',
@@ -49,6 +53,7 @@ def get_cmd_opts():
 app = Flask(__name__)
 mysql = MySQL()
 
+# get service or command options for specifying database
 (db_service, db_username, db_password, db_database, db_host) = get_cmd_opts()
 
 # get service instance information, and go
@@ -56,29 +61,24 @@ vcap_svc = os.getenv("VCAP_SERVICES", "")
 print "vcap_svc:", vcap_svc
 if vcap_svc == '':
     print "No service bindings, defaulting to local/debug configuration"
-    app.config['MYSQL_DATABASE_USER'] = db_username # 'testuser'
-    app.config['MYSQL_DATABASE_PASSWORD'] = db_password # 'test123'
+    app.config['MYSQL_DATABASE_USER'] = db_username # 'your_test_user'
+    app.config['MYSQL_DATABASE_PASSWORD'] = db_password # 'your_test_pass'
     app.config['MYSQL_DATABASE_DB'] = db_database # ''
-    app.config['MYSQL_DATABASE_HOST'] = db_host # 'npm.inmyshorts.org'
+    app.config['MYSQL_DATABASE_HOST'] = db_host # 'your_test_host'
 else:
+    # examples: cleardb, p-mysql, core-mysql - whatever you bind your service
+    # as, or "mysql" if you use the supplied shell script
     vcap = json.loads(vcap_svc)
-    db_svc = ''
-    if 'cleardb' in vcap:
+    if db_service in vcap:
         # using the "cleardb" service in pivotal web services
-        print "Using PWS cleardb bindings"
-        db_parm = vcap['cleardb'][0]
-        db_svc = 'cleardb'
-    elif 'p-mysql' in vcap:
-        print "Using p-mysql bindings"
-        db_parm = vcap['p-mysql'][0]
-        db_svc = 'p-mysql'
-    elif 'core-mysql' in vcap:
-        db_parm = vcap['core-mysql'][0]
-        db_svc = 'core-mysql'
-    app.config['MYSQL_DATABASE_USER'] = db_parm['credentials']['username']
-    app.config['MYSQL_DATABASE_PASSWORD'] = db_parm['credentials']['password']
-    app.config['MYSQL_DATABASE_DB'] = ''
-    app.config['MYSQL_DATABASE_HOST'] = db_parm['credentials']['hostname']
+        print("Using %s bindings" % (db_service))
+        db_parm = vcap[db_service][0]
+        app.config['MYSQL_DATABASE_USER'] = db_parm['credentials']['username']
+        app.config['MYSQL_DATABASE_PASSWORD'] = db_parm['credentials']['password']
+        app.config['MYSQL_DATABASE_DB'] = ''
+        app.config['MYSQL_DATABASE_HOST'] = db_parm['credentials']['hostname']
+    else:
+        print("Could not find service %s in VCAP" % (db_service))
 
 mysql.init_app(app)
 
@@ -125,6 +125,7 @@ def get_mysql_galera():
     conn = mysql.connect()
     cursor = conn.cursor()
     query = 'show global status like \'%s\'' % (filter)
+    print("query: %s" % (query))
     cursor.execute(query)
     data = cursor.fetchall()
     conn.close()

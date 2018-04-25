@@ -5,3 +5,5 @@ applications:
   buildpack: python_buildpack
   services:
     - mysql
+  env:
+    STAT_DBSVC: "cleardb"
