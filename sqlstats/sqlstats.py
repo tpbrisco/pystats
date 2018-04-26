@@ -1,6 +1,7 @@
 # a very simple query point to check mysql galera status and return json
 import os, sys
 import getopt
+import requests
 from flask import Flask, render_template, json, request, jsonify, Response
 from flaskext.mysql import MySQL
 
@@ -77,6 +78,7 @@ else:
         app.config['MYSQL_DATABASE_PASSWORD'] = db_parm['credentials']['password']
         app.config['MYSQL_DATABASE_DB'] = ''
         app.config['MYSQL_DATABASE_HOST'] = db_parm['credentials']['hostname']
+        app.config['MYSQL_DATABASE_PORT'] = int(db_parm['credentials']['port'])
     else:
         print("Could not find service %s in VCAP" % (db_service))
 
@@ -110,6 +112,20 @@ def key_match(d, m):
 @app.route("/")
 def main():
     return "Welcome! Maybe you meant /wsrep_status?"
+
+@app.route("/proxy", methods=['GET', 'POST'])
+def get_proxy_stats():
+    '''query proxy port to see if the target responds'''
+    # port 1936 is the default mysql_proxy / switchboard status port
+    try:
+        r = requests.get("http://%s:%d/v0/backends" % (
+            app.config['MYSQL_DATABASE_HOST'], 1936))
+    except requests.exceptions.RequestException:
+        return Response(json.dumps({"Proxy": "no proxy, mate"}, indent=4),
+                        mimetype='application/json')
+    if not r.ok:
+        print("Proxy-check - failed, code %d" % (r.status_code))
+    return Response(r.json(), mimetype='application/json')
 
 @app.route("/wsrep_status", methods=['GET', 'POST'])
 def get_mysql_galera():
