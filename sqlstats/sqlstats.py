@@ -113,20 +113,6 @@ def key_match(d, m):
 def main():
     return "Welcome! Maybe you meant /wsrep_status?"
 
-@app.route("/proxy", methods=['GET', 'POST'])
-def get_proxy_stats():
-    '''query proxy port to see if the target responds'''
-    # port 1936 is the default mysql_proxy / switchboard status port
-    try:
-        r = requests.get("http://%s:%d/v0/backends" % (
-            app.config['MYSQL_DATABASE_HOST'], 1936))
-    except requests.exceptions.RequestException:
-        return Response(json.dumps({"Proxy": "no proxy, mate"}, indent=4),
-                        mimetype='application/json')
-    if not r.ok:
-        print("Proxy-check - failed, code %d" % (r.status_code))
-    return Response(r.json(), mimetype='application/json')
-
 @app.route("/wsrep_status", methods=['GET', 'POST'])
 def get_mysql_galera():
     '''query database for galera wsrep_status, default filter=wsrep_cluster_%'''
