@@ -155,7 +155,7 @@ def get_galera_all():
     if 'wsrep_incoming_addresses' not in d:
         r = {"ready": False,
              "status": "connection to %s failed" % (app.config['MYSQL_DATABASE_HOST'])}
-        return r, status.HTTP_404_NOT_FOUND
+        return json.dumps(r, indent=4), 404  # not found
     host_list = d['wsrep_incoming_addresses']
     host_vars = {}
     for hp in host_list.split(','):
@@ -171,7 +171,7 @@ def get_galera_all():
     # check if cluster is on
     if 'wsrep_ready' in d:
         if d['wsrep_ready'] != "ON":
-            return {"status": json.dumps(d, indent=4), "ready": False}
+            return json.dumps({"status": json.dumps(d, indent=4), "ready": False}, indent=4)
     # filter the results in "host_vars" down to those we're interested in for
     # cluster formation and replication performance
     cluster_health = {}
