@@ -4,6 +4,7 @@ import getopt
 import requests
 from flask import Flask, render_template, json, request, jsonify, Response
 from flaskext.mysql import MySQL
+import pymysql
 
 # parse command line opts - return dictionary with basic params
 # priority for settings variables:
@@ -101,17 +102,108 @@ def cvt_data(d):
         r[a] = b
     return r
 
-def key_match(d, m):
-    '''match (m) key in dictionary (d)'''
+def key_filter(d, m):
+    '''return dictionary keys found in list m'''
     r = {}
-    for k in d:
-        if k.startswith(m):
-            r[k] = d[k]
+    r = {k_key: d[k_key] for k_key in m}
     return r
+
+def nway_equal(ek, dl):
+    equal_state = False
+    last_val = ''
+    for k in dl:
+        if last_val == '':
+            last_val = dl[k][ek]
+        else:
+            if dl[k][ek] != last_val:
+                return False
+    return True
+
+def nway_delta(ck, dv, mv, dl):
+    '''check differences between key ck - max delta (dv) and max value (mv)'''
+    delta_state = False
+    last_val = ''
+    for k in dl:
+        if last_val == '':
+            last_val = float(dl[k][ck])
+            if last_val > mv:
+                return False
+        else:
+            cur_val = float(dl[k][ck])
+            if cur_val > mv:
+                return False
+            if abs(cur_val - last_val) > dv:
+                return False
+    return True
+        
 
 @app.route("/")
 def main():
     return "Welcome! Maybe you meant /wsrep_status?"
+
+@app.route("/wsrep_all", methods=['GET', 'POST'])
+def get_galera_all():
+    '''query database for ALL galera members'''
+    
+    conn = mysql.connect()
+    cursor = conn.cursor()
+    query = "show global status like \'wsrep_%'"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    conn.close()
+    d = cvt_data(data)
+    if 'wsrep_incoming_addresses' not in d:
+        r = {"ready": False,
+             "status": "connection to %s failed" % (app.config['MYSQL_DATABASE_HOST'])}
+        return r, status.HTTP_404_NOT_FOUND
+    host_list = d['wsrep_incoming_addresses']
+    host_vars = {}
+    for hp in host_list.split(','):
+        h,p = hp.split(':')
+        odb = pymysql.Connection(host=h,
+                              user=app.config['MYSQL_DATABASE_USER'],
+                              passwd=app.config['MYSQL_DATABASE_PASSWORD'],
+                              db=app.config['MYSQL_DATABASE_DB'])
+        cur = odb.cursor()
+        cur.execute("show global status like \'wsrep_%\'")
+        host_vars[h] = cvt_data(cur.fetchall())
+        odb.close()
+    # check if cluster is on
+    if 'wsrep_ready' in d:
+        if d['wsrep_ready'] != "ON":
+            return {"status": json.dumps(d, indent=4), "ready": False}
+    # filter the results in "host_vars" down to those we're interested in for
+    # cluster formation and replication performance
+    cluster_health = {}
+    cluster_keys = [ 'wsrep_cluster_size', 'wsrep_cluster_status',
+                    'wsrep_cluster_conf_id', 'wsrep_cluster_state_uuid',
+                    'wsrep_ready', 'wsrep_connected', 'wsrep_local_state_comment'  ]
+    for h in host_vars:
+        cluster_health[h] = key_filter(host_vars[h], cluster_keys)
+    rep_health = {}
+    rep_keys = ['wsrep_local_recv_queue_avg', 'wsrep_flow_control_paused',
+                'wsrep_cert_deps_distance', 'wsrep_local_send_queue_avg'  ]
+    for h in host_vars:
+        rep_health[h] = key_filter(host_vars[h], rep_keys)
+    # generate a summary message
+    summary = {}
+    cluster_ok = True
+    for k in cluster_keys:
+        if not nway_equal(k, host_vars):
+            cluster_ok = False
+            break
+    summary['cluster_ok'] =  cluster_ok
+    replication_ok = True
+    for k in rep_keys:
+        if not nway_delta(k, 0.2, 2.0, host_vars):
+            replication_ok = False
+            break
+    summary['replication_ok'] = replication_ok
+    answer = {"summary": summary,
+              "cluster": cluster_health,
+              "replication": rep_health,
+              "ready": True  }
+    return Response(json.dumps(answer, indent=4), mimetype='application/json')
 
 @app.route("/wsrep_status", methods=['GET', 'POST'])
 def get_mysql_galera():
@@ -132,6 +224,7 @@ def get_mysql_galera():
     data = cursor.fetchall()
     conn.close()
     d = cvt_data(data)
+    d['ready'] = True
     return Response(json.dumps(d, indent=4), mimetype='application/json')
     
 
