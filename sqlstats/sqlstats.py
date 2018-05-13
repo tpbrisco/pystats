@@ -199,9 +199,16 @@ def get_galera_all():
             replication_ok = False
             break
     summary['replication_ok'] = replication_ok
+    # finally, convert all the hashes cluster_health and rep_health data into arrays
+    cluster_list = []
+    rep_list = []
+    for h in cluster_health:
+        cluster_list.append({'host': h, 'status': cluster_health[h]})
+    for r in rep_health:
+        rep_list.append({'host': r, 'status': rep_health[h]})
     answer = {"summary": summary,
-              "cluster": cluster_health,
-              "replication": rep_health,
+              "cluster": cluster_list,
+              "replication": rep_list,
               "ready": True  }
     return Response(json.dumps(answer, indent=4), mimetype='application/json')
 
