@@ -96,7 +96,7 @@ data = cursor.fetchall()
 
 def cvt_data(d):
     '''convert data from list-of-lists into dictionary'''
-    r = {}
+    r = dict()
     for i in d:
         a,b = i
         r[a] = b
@@ -104,7 +104,7 @@ def cvt_data(d):
 
 def key_filter(d, m):
     '''return dictionary keys found in list m'''
-    r = {}
+    r = dict()
     r = {k_key: d[k_key] for k_key in m}
     return r
 
@@ -205,7 +205,7 @@ def get_galera_all():
     for h in cluster_health:
         cluster_list.append({'host': h, 'status': cluster_health[h]})
     for r in rep_health:
-        rep_list.append({'host': r, 'status': rep_health[h]})
+        rep_list.append({'host': r, 'status': rep_health[r]})
     answer = {"summary": summary,
               "cluster": cluster_list,
               "replication": rep_list,
