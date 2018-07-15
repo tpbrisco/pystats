@@ -145,7 +145,14 @@ def main():
 def get_galera_all():
     '''query database for ALL galera members'''
     
-    conn = mysql.connect()
+    try:
+        conn = mysql.connect()
+    except pymysql.err.OperationalError as e:
+        print("exception type:",type(e)," e:",e)
+        answer = {"summary": {'replication_ok': False, 'cluster_ok': False},
+                  "ready": "false",
+                  "message": str(e)}
+        return Response(json.dumps(answer, indent=4), mimetype='application/json')
     cursor = conn.cursor()
     query = "show global status like \'wsrep_%'"
     cursor.execute(query)
@@ -223,7 +230,14 @@ def get_mysql_galera():
         new_filter = request.args.get('filter')
         if new_filter != None:
             filter = new_filter
-    conn = mysql.connect()
+    try:
+        conn = mysql.connect()
+    except pymysql.err.OperationalError as e:
+        print("exception type:",type(e)," e:",e)
+        answer = {"summary": {'replication_ok': False, 'cluster_ok': False},
+                  "ready": "false",
+                  "message": str(e)}
+        return Response(json.dumps(answer, indent=4), mimetype='application/json')
     cursor = conn.cursor()
     query = 'show global status like \'%s\'' % (filter)
     print("query: %s" % (query))
