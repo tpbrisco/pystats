@@ -67,6 +67,9 @@ else:
     stats_sleep_time = 30
 s3 = s3_initialize(conf)
 
+print('sleeping %d seconds' % (stats_sleep_time))
+if 's3uri' in conf:
+    print('using s3 target %s' % (conf['s3uri']))
 ctime, b_name = s3_bucket_create(s3)
 print('create bucket name: %s time: %f' % (b_name, ctime))
 dtime,  o_name = s3_put_object(s3, b_name, 4096)
@@ -76,7 +79,7 @@ print('8K object put %f' % (dtime))
 dtime,  o_name = s3_put_object(s3, b_name, 16384)
 print('16K object put %f' % (dtime))
 dtime = s3_delete_object(s3, b_name, o_name)
-print(' object %s del %f' % (o_name, dtime))
+print('object %s del %f' % (o_name, dtime))
 dtime = s3_bucket_delete(s3, b_name)
 print('delete bucket name: %s time: %f' % (b_name, dtime))
 
