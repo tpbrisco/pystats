@@ -13,7 +13,7 @@ def conf_load():
         raise KeyError("No [DEFAULT] section in configuration")
     return config['DEFAULT']
 
-def s3_initialize():
+def s3_initialize(conf):
     '''initialize s3 session parameters'''
     # rely on AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in
     # the environment for boto.  This is about the worst way to do this - but this
@@ -23,12 +23,15 @@ def s3_initialize():
     if k == None or  k == '' or \
        s == None or s == '':
         raise KeyError('No AWS access and secret keys in the environment')
-    s3 = boto3.client('s3')
+    if 's3uri' in conf:
+        s3 = boto3.client('s3', endpoint_url=conf['s3uri'])
+    else:
+        s3 = boto3.client('s3')
     return s3
 
 def s3_bucket_create(s3):
     start = time.time()
-    name = '%d_mybucket' % (os.getpid())
+    name = '%dmybucket' % (os.getpid())
     s3.create_bucket(Bucket=name)
     end = time.time()
     return end - start, name
@@ -57,7 +60,13 @@ def s3_delete_object(s3, bname, oname):
 
 stats = []
 conf = conf_load()
-s3 = s3_initialize()
+# initialize
+if 'sleep_time' in conf:
+    stats_sleep_time = int(conf['sleep_time'])
+else:
+    stats_sleep_time = 30
+s3 = s3_initialize(conf)
+
 ctime, b_name = s3_bucket_create(s3)
 print('create bucket name: %s time: %f' % (b_name, ctime))
 dtime,  o_name = s3_put_object(s3, b_name, 4096)
@@ -110,4 +119,4 @@ if __name__ == '__main__':
         stats[0]['object_delete']['summary'].observe(d_time)
         d_time = s3_bucket_delete(s3, b_name)
         stats[0]['bucket_delete']['summary'].observe(d_time)
-        time.sleep(30)
+        time.sleep(stats_sleep_time)
