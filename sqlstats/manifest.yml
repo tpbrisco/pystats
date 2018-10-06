@@ -4,6 +4,8 @@ applications:
   instances: 1
   buildpack: python_buildpack
   services:
-    - mysql
+    - p-mysql
   env:
-    STAT_DBSVC: "cleardb"
+    # information application what service to look for
+    STAT_DBSVC: "p-mysql"
+

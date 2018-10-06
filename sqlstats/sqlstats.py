@@ -77,11 +77,12 @@ else:
         db_parm = vcap[db_service][0]
         app.config['MYSQL_DATABASE_USER'] = db_parm['credentials']['username']
         app.config['MYSQL_DATABASE_PASSWORD'] = db_parm['credentials']['password']
-        app.config['MYSQL_DATABASE_DB'] = ''
+        app.config['MYSQL_DATABASE_DB'] = db_parm['credentials']['name']
         app.config['MYSQL_DATABASE_HOST'] = db_parm['credentials']['hostname']
         app.config['MYSQL_DATABASE_PORT'] = int(db_parm['credentials']['port'])
     else:
         print("Could not find service %s in VCAP" % (db_service))
+        sys.exit(1)
 
 mysql.init_app(app)
 
@@ -167,6 +168,8 @@ def get_galera_all():
     host_vars = {}
     for hp in host_list.split(','):
         h,p = hp.split(':')
+        if h == '127.0.0.1':
+            continue
         odb = pymysql.Connection(host=h,
                               user=app.config['MYSQL_DATABASE_USER'],
                               passwd=app.config['MYSQL_DATABASE_PASSWORD'],
