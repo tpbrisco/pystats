@@ -1,0 +1,15 @@
+
+# usage:
+#  set your environment variables for the database host (DBHOST),
+#  database user (DBUSER) and database users' password (DBPASS)
+# e.g. -u testuser -p test123 -h dbhost
+# will attempt to use the credentials against the target host's mariadb
+#
+# this will start the sqlstats program running against a remote
+#  database.  If you supply the username/password/host, it'll run in
+#  Flask debug mode, and you can curl it locally.
+# 
+DBHOST=${DBHOST:-myhost.com}
+DBUSER=${DBUSER:-testuser}
+DBPASS=${DBPASS:-testpass}
+python sqlstats.py -u ${DBUSER} -p ${DBPASS} -h ${DBHOST}

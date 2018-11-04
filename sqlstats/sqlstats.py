@@ -8,11 +8,8 @@ import pymysql
 
 # parse command line opts - return dictionary with basic params
 # priority for settings variables:
-#  - command line
-#  - config file
 #  - environment variables
-# -f config.txt
-# and set variables based on environment variables
+#  - command line
 def get_cmd_opts():
     '''get command options - look in environment or command line for parameters'''
     # Environment variables (e.g. STAT_DBSVC) are best in cloud foundry environments,
