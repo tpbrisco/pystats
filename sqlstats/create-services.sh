@@ -1,1 +1,1 @@
-cf create-service cleardb spark mysql
+cf create-service cleardb spark p-mysql
