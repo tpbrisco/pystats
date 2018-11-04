@@ -1,0 +1,6 @@
+applications:
+- name: certstats
+  memory: 512M
+  instances: 1
+  buildpack: python_buildpack
+
