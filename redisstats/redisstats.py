@@ -69,7 +69,8 @@ app.config['REDIS_DATABASE_PORT'] = int(r_port)
 
 @app.route("/")
 def main():
-    return "Welcome! Things arent quite ready yet"
+    return Response(json.dumps({'status': 'fail', 'msg': 'try /bench'}, indent=2),
+                    mimetype='application/json')
 
 @app.route("/bench")
 def bench():
