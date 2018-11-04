@@ -5,13 +5,13 @@ import ssl, socket
 from flask import Flask, json, request, Response
 
 
-def get_cmd_opts(argv, inifile):
+def get_cmd_opts(argv):
     # check command line -- only used if running interactively
     conf_details = {}
     # command line items accrue as encountered: "name", host, port
     try:
-        options, remainder = getopt.getopt(argv, 'n:h:p:',
-                                           ['name=', 'host=', 'port='])
+        options, remainder = getopt.getopt(argv, 'n:h:p:c:',
+                                           ['name=', 'host=', 'port=', 'cert='])
     except getopt.GetoptError as err:
         print('ERROR:', err)
         sys.exit(1)
@@ -19,10 +19,16 @@ def get_cmd_opts(argv, inifile):
         if opt in ('-n', '--name'):
             conf_details[arg] = {}
             sect = arg
+            # initialize fields to default
+            conf_details[arg]['hostname'] = ''
+            conf_details[arg]['port'] = 443
+            conf_details[arg]['cert'] = ''
         elif opt in ('-h', '--host'):
             conf_details[sect]['hostname'] = arg
         elif opt in ('-p', '--port'):
             conf_details[sect]['port'] = int(arg)
+        elif opt in ('-c', '--cert'):
+            conf_details[sect]['cert'] = arg
     return conf_details
 
 
@@ -96,18 +102,17 @@ def ccheck():
     return Response(json.dumps(get_cert_stats(hostname, port, certpath), indent=2))
 
 
-conf = get_cmd_opts(sys.argv[1:], 'certs.ini')
+conf = get_cmd_opts(sys.argv[1:])
 # print json.dumps(conf, indent=2)
 
-if __name__ == '__main__':
+if __name__ == '__main__'  and len(sys.argv[1:]) == 0:
     port = os.getenv("PORT", default=5000)
     debug = os.isatty(sys.stdout.fileno())  # set debug true if we're interactive
     print "Running with debug=%s" % (debug)
     app.run(host='0.0.0.0', port=port, debug=debug)
-sys.exit(0)
 
 for item in conf:
-    stats = get_cert_stats(conf[item]['hostname'], conf[item]['port'])
+    stats = get_cert_stats(conf[item]['hostname'], conf[item]['port'], conf[item]['cert'])
     stats['name'] = "%s" % (item)
     stats['hostname'] = "%s" % (conf[item]['hostname'])
     stats['port'] = "%d" % (conf[item]['port'])
