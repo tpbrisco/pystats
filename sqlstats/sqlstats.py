@@ -2,7 +2,7 @@
 import os, sys
 import getopt
 import requests
-from flask import Flask, render_template, json, request, jsonify, Response
+from flask import Flask, render_template, json, request, Response
 from flaskext.mysql import MySQL
 import pymysql
 
