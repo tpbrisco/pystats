@@ -1,5 +1,5 @@
 applications:
 - name: dnsstats
-  memory: 512M
+  memory: 128M
   instances: 1
   buildpack: python_buildpack
