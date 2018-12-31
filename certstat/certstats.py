@@ -99,7 +99,9 @@ def ccheck():
         else:
             certpath = ''
     print "ccheck hostname=%s port=%d certpath=%s" % (hostname, port, certpath)
-    return Response(json.dumps(get_cert_stats(hostname, port, certpath), indent=2))
+    return Response(json.dumps(get_cert_stats(hostname, port, certpath),
+                               indent=2),
+                    mimetype='application/json')
 
 
 conf = get_cmd_opts(sys.argv[1:])
