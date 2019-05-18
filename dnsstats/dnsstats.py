@@ -1,7 +1,7 @@
 # a very simple prometheus exporter for DNS lookup times
 import sys, os
 import dns.resolver, dns.name
-from prometheus_client import start_http_server, Summary
+from prometheus_client import start_http_server, Summary, Gauge
 import time
 import configparser
 
@@ -38,27 +38,27 @@ no_resolvers = len(resolver.nameservers)
 # 	The index of the 'stats' array is the index of the nameserver.
 # 	The dictionary contains
 #     	good/bad relative/fqdn lookup
-#			name: the hostname to look up
-#			summary: the prometheus summary object for it
+# 			name: the hostname to look up
+# 			summary: the prometheus summary object for it
 stats = []
 conf = conf_load()
 print("{0} resolvers".format(no_resolvers))
 for i in range(0, no_resolvers):
     new_stat = {}
     name = 'ip_%s_dns_' % resolvers[i]
-    name = name.replace('.','_') # make acceptable prometheus metric name
+    name = name.replace('.', '_')   # make acceptable prometheus metric name
     new_stat['good_fqdn'] = {'name':  conf['good_fqdn'],
-             'summary': Summary(name + 'good_fqdn_time',
-                     'Time spent on good FQDN DNSlookup')}
+                             'summary': Gauge(name + 'good_fqdn_time',
+                                                'Time spent on good FQDN DNSlookup')}
     new_stat['bad_fqdn'] = {'name': conf['bad_fqdn'],
-             'summary': Summary(name + 'bad_fqdn_time',
-                                'Time spent on bad FQDN DNS lookup')}
+                            'summary': Gauge(name + 'bad_fqdn_time',
+                                               'Time spent on bad FQDN DNS lookup')}
     new_stat['good_rel'] = {'name': conf['good_rel'],
-             'summary': Summary(name + 'good_rel_time',
-                                'Time spent on good relative DNS lookup')}
+                            'summary': Gauge(name + 'good_rel_time',
+                                               'Time spent on good relative DNS lookup')}
     new_stat['bad_rel'] = {'name': conf['bad_rel'],
-             'summary': Summary(name + 'bad_rel_time',
-                                'Time spent on bad relative DNS lookup')}
+                           'summary': Gauge(name + 'bad_rel_time',
+                                              'Time spent on bad relative DNS lookup')}
     stats.append(new_stat.copy())
     print("\t{0}".format(resolver.nameservers[i]))
 print("Len of stats -> {0}".format(len(stats)))
@@ -72,9 +72,9 @@ if __name__ == '__main__':
     while True:
         for nr in range(0, no_resolvers):
             rip = resolvers[nr]
-            stats[nr]['good_fqdn']['summary'].observe(dns_lookup(rip, resolver, stats[nr]['good_fqdn']['name']))
-            stats[nr]['bad_fqdn']['summary'].observe(dns_lookup(rip, resolver, stats[nr]['bad_fqdn']['name']))
-            stats[nr]['good_rel']['summary'].observe(dns_lookup(rip, resolver, stats[nr]['good_rel']['name']))
-            stats[nr]['bad_rel']['summary'].observe(dns_lookup(rip, resolver, stats[nr]['bad_rel']['name']))
+            stats[nr]['good_fqdn']['summary'].set(dns_lookup(rip, resolver, stats[nr]['good_fqdn']['name']))
+            stats[nr]['bad_fqdn']['summary'].set(dns_lookup(rip, resolver, stats[nr]['bad_fqdn']['name']))
+            stats[nr]['good_rel']['summary'].set(dns_lookup(rip, resolver, stats[nr]['good_rel']['name']))
+            stats[nr]['bad_rel']['summary'].set(dns_lookup(rip, resolver, stats[nr]['bad_rel']['name']))
         time.sleep(30)
         
