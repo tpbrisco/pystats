@@ -1,0 +1,11 @@
+applications:
+- name: redisprom
+  memory: 512M
+  instances: 1
+  buildpack: python_buildpack
+  services:
+    - p-redis
+  env:
+    # inform application what service to look for in VCAP_SERVICES
+    STAT_REDIS_SVC: "p.redis"
+
