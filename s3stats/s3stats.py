@@ -1,17 +1,19 @@
 # a very simple prometheus exporter for S3 I/O times
-import sys, os
+import os
 from prometheus_client import start_http_server, Summary
 import boto3
 import time, configparser
 import random, string		# for generating data for object storage
 
+
 def conf_load():
     '''load configuration file'''
     config = configparser.ConfigParser()
     config.read('config.ini')
-    if not 'DEFAULT' in config:
+    if 'DEFAULT' not in config:
         raise KeyError("No [DEFAULT] section in configuration")
     return config['DEFAULT']
+
 
 def s3_initialize(conf):
     '''initialize s3 session parameters'''
@@ -20,8 +22,8 @@ def s3_initialize(conf):
     # is just the prototype.
     k = os.getenv('AWS_ACCESS_KEY_ID')
     s = os.getenv('AWS_SECRET_ACCESS_KEY')
-    if k == None or  k == '' or \
-       s == None or s == '':
+    if k is None or k == '' or \
+       s is None or s == '':
         raise KeyError('No AWS access and secret keys in the environment')
     if 's3uri' in conf:
         s3 = boto3.client('s3', endpoint_url=conf['s3uri'])
@@ -29,18 +31,21 @@ def s3_initialize(conf):
         s3 = boto3.client('s3')
     return s3
 
+
 def s3_bucket_create(s3):
     start = time.time()
     name = '%dmybucket' % (os.getpid())
     s3.create_bucket(Bucket=name)
     end = time.time()
     return end - start, name
-    
+
+
 def s3_bucket_delete(s3, name):
     start = time.time()
     s3.delete_bucket(Bucket=name)
     end = time.time()
     return end - start
+
 
 def s3_put_object(s3, bname, size):
     # generate random string of 'size' length
@@ -51,12 +56,13 @@ def s3_put_object(s3, bname, size):
     end = time.time()
     return end - start, obj_name
 
+
 def s3_delete_object(s3, bname, oname):
     start = time.time()
     s3.delete_object(Bucket=bname, Key=oname)
     end = time.time()
     return end - start
-    
+
 
 stats = []
 conf = conf_load()
