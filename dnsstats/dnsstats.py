@@ -1,7 +1,7 @@
 # a very simple prometheus exporter for DNS lookup times
 import sys, os
 import dns.resolver, dns.name
-from prometheus_client import start_http_server, Summary, Gauge
+from prometheus_client import start_http_server, Gauge
 import time
 import configparser
 
@@ -77,4 +77,3 @@ if __name__ == '__main__':
             stats[nr]['good_rel']['summary'].set(dns_lookup(rip, resolver, stats[nr]['good_rel']['name']))
             stats[nr]['bad_rel']['summary'].set(dns_lookup(rip, resolver, stats[nr]['bad_rel']['name']))
         time.sleep(30)
-        
