@@ -5,8 +5,8 @@ import redis
 import time
 import getopt
 import random, string
-import configparser
 from flask import Flask, json, request, Response
+
 
 def get_cmd_opts():
     '''get command options - look in environment or command line for parameters'''
@@ -43,17 +43,18 @@ def get_cmd_opts():
         print("Using %s bindings" % (stat_redis_svc))
         if stat_redis_svc in vcap:
             r_svc = vcap[stat_redis_svc][0]['credentials']
-            print ("bindings: %s" % (json.dumps(r_svc)))
+            print("bindings: %s" % (json.dumps(r_svc)))
             stat_redis_pass = r_svc['password']
             stat_redis_host = r_svc['host']
-            stat_redis_port =  r_svc['port']
+            stat_redis_port = r_svc['port']
         else:
             # can't find service in environment
             stat_redis_pass = stat_redis_host = stat_redis_port = None
-    print ("svc: %s pass: %s host: %s port: %s\n" %
-           (stat_redis_svc, stat_redis_pass, stat_redis_host, stat_redis_port))
+    print("svc: %s pass: %s host: %s port: %s\n" %
+          (stat_redis_svc, stat_redis_pass, stat_redis_host, stat_redis_port))
     return (stat_redis_svc, stat_redis_pass,
             stat_redis_host, stat_redis_port)
+
 
 (r_service, r_password, r_host, r_port) = get_cmd_opts()
 if (r_host == '') or (r_password == '') or (r_port == ''):
@@ -61,16 +62,18 @@ if (r_host == '') or (r_password == '') or (r_port == ''):
     sys.exit(1)
 
 app = Flask(__name__)
-print ("Redis svc: %s pass: %s host: %s port: %s\n" %
-           (r_service, r_password, r_host, r_port))
+print("Redis svc: %s pass: %s host: %s port: %s\n" %
+      (r_service, r_password, r_host, r_port))
 app.config['REDIS_DATABASE_PASS'] = r_password
 app.config['REDIS_DATABASE_HOST'] = r_host
 app.config['REDIS_DATABASE_PORT'] = int(r_port)
+
 
 @app.route("/")
 def main():
     return Response(json.dumps({'status': 'fail', 'msg': 'try /bench'}, indent=2),
                     mimetype='application/json')
+
 
 @app.route("/bench")
 def bench():
@@ -79,7 +82,7 @@ def bench():
                     port=app.config['REDIS_DATABASE_PORT'],
                     password=app.config['REDIS_DATABASE_PASS'])
 
-    for noise_len in [ 5, 128, 512, 1024, 4096 ]:
+    for noise_len in [5, 128, 512, 1024, 4096]:
         noise = ''.join(random.choice(string.hexdigits) for i in range(noise_len))
         start = time.time()
         r.set('foo', noise)
@@ -90,6 +93,7 @@ def bench():
     # r.release()
     return Response(json.dumps(ans, indent=2),
                     mimetype='application/json')
+
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", default=5000))
