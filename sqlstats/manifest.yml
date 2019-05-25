@@ -7,5 +7,5 @@ applications:
     - p-mysql
   env:
     # information application what service to look for
-    STAT_DBSVC: "p-mysql"
+    STAT_DBSVC: "p.mysql"
 
