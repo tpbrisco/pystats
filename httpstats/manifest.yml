@@ -1,0 +1,7 @@
+applications:
+- name: httpstats
+  memory: 128M
+  instances: 1
+  buildpack: python_buildpack
+  env:
+   TARGET_URL: http://echo.dev.cfdev.sh
