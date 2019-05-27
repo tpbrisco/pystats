@@ -1,1 +1,1 @@
-cf cs p-redis shared-vm redis
+cf cs p.redis cache-small redis
