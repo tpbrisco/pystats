@@ -4,7 +4,7 @@ applications:
   instances: 1
   buildpack: python_buildpack
   services:
-    - p-mysql
+    - p.mysql
   env:
     # information application what service to look for
     STAT_DBSVC: "p.mysql"

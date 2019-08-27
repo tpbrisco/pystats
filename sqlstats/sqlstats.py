@@ -96,7 +96,8 @@ def cvt_data(d):
     '''convert data from list-of-lists into dictionary'''
     r = dict()
     for i in d:
-        a,b = i
+        a = i[0]
+        b = [str(x) for x in i[1:]]
         r[a] = b
     return r
 
@@ -138,6 +139,27 @@ def nway_delta(ck, dv, mv, dl):
 @app.route("/")
 def main():
     return "Welcome! Maybe you meant /wsrep_status?"
+
+@app.route("/proclist", methods=['GET', 'POST'])
+def get_processlist():
+    '''query data for process list'''
+    
+    try:
+        conn = mysql.connect()
+    except pymysql.err.OperationalError as e:
+        print("exception type:",type(e)," e:",e)
+        answer = {"summary": {'replication_ok': False, 'cluster_ok': False},
+                  "ready": "false",
+                  "message": str(e)}
+        return Response(json.dumps(answer, indent=4), mimetype='application/json')
+    cursor = conn.cursor()
+    query = "show processlist"
+    cursor.execute(query)
+    data = cursor.fetchall()
+    print("data:", data)
+    conn.close()
+    d = cvt_data(data)
+    return Response(json.dumps(d, indent=4), mimetype='application/json')
 
 @app.route("/wsrep_all", methods=['GET', 'POST'])
 def get_galera_all():
