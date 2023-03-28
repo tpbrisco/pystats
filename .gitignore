@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+#
+s3stats/AWS_sample.sh
+s3stats/config.init-local
+
 # emacs files
 *~
 
